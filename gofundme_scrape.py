@@ -1,9 +1,10 @@
 from bs4 import BeautifulSoup
 from selenium import webdriver
+from os import getcwd 
 import requests
 import time
-PATH = "/Users/nikita/chromedriver 2" #update with your Chromedriver path
-
+PATH = getcwd() +'/chromedriver' #update with your Chromedriver path
+print(PATH)
 def get_urls(keywords_list):
     '''
     get_urls(): this function takes in a list of search terms, and scrapes all of the URLS for 
