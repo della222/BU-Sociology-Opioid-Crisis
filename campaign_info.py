@@ -1,8 +1,9 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 import pandas as pd
+from os import getcwd
 
-driver = webdriver.Chrome('/Users/dellalalala/Downloads/chromedriver')
+driver = webdriver.Chrome(getcwd()+'/chromedriver')
 
 campaign = 'https://www.gofundme.com/f/Fentanyl-Testing?qid=c92ee8440e8f330604127a6c642a9de6'
 driver.get(campaign)
