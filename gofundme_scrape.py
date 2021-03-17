@@ -13,6 +13,13 @@ def get_urls(keywords_list):
     '''
     get_urls(): this function takes in a list of search terms, and scrapes all of the URLS for 
     GoFundMe campaigns associated with the search term and outputs it as a list
+    
+    Args:
+        keywords_list (list of strings): list of search terms
+
+    Returns:
+        urls (list of strings): list of GoFundMe urls 
+        labels (list of strings): search terms associated with GoFundMe urls
     '''
     urls = []
     labels = []
