@@ -10,5 +10,7 @@ We created a scraper to extract the following basic info from a particular campa
 - number of donors
 - number of shares
 - amount raised compared to total goal (as a percentage)
+- number of campaign updates 
+- number of campaign comments
 
 ChromeDriver is included, so the user does not have to change to their local path.
