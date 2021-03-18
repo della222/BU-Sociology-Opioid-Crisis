@@ -6,6 +6,8 @@ We created a scraper to extract the following basic info from a particular campa
 - title
 - organizer
 - date created
+- location
+- campaign tags
 - number of followers
 - number of donors
 - number of shares
