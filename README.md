@@ -5,6 +5,7 @@ We currently have a scraper that extracts all of the URLs of the pages containin
 We created a scraper to extract the following basic info from a particular campaign:
 - title
 - organizer
+- beneficiary
 - date created
 - location
 - campaign tags
