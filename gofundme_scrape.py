@@ -106,9 +106,9 @@ def merge_redundant_urls(df):
     return df
 
 
-keywords = ['opiate', 'opiates']
-# keywords = ['opiate', 'opioid', 'addiction', 'addict', 'heroin', 'drugs', 'overdose',
-# 'dependency', 'demon', 'recovery', 'rehabilitation', 'rehab']
+#keywords = ['opiate', 'opiates']
+keywords = ['opiate', 'opioid', 'addiction', 'addict', 'heroin', 'drugs', 'overdose',
+'dependency', 'demon', 'recovery', 'rehabilitation', 'rehab']
 all_urls, labels = get_urls(keywords)
 df = convert_to_raw_df(all_urls, labels)
 df = drop_query_id(df)
