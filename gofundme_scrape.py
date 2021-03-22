@@ -101,21 +101,20 @@ def merge_redundant_urls(df):
         # get all indices where url matches
         matches = np.where(df['urls'] == url)[0].tolist()
         for match in range(len(matches)):
-            if match == 0:  # change entry of first appearance to list and add  first keyword to it
+            if match == 0:  # change entry of first appearance to list and add first keyword to it
                 word = df.iloc[matches[match]]['keyword']
                 df.iloc[matches[match]]['keyword'] = []
                 df.iloc[matches[match]]['keyword'].append(word)
-            else:  # add keyword of redundant url to first appearance adn then drop the redundant row
+            else:  # add keyword of redundant url to first appearance
                 df.iloc[matches[0]]['keyword'].append(
                     df.iloc[matches[match]]['keyword'])
-                df = df.drop(df.index[matches[match]])
-
+    df = df.drop_duplicates(subset='urls', keep='first')  # drop all appearances but first
     return df
 
 
-keywords = ['opiate', 'opiates']
-# keywords = ['opiate', 'opioid', 'addiction', 'addict', 'heroin', 'drugs', 'overdose',
-# 'dependency', 'demon', 'recovery', 'rehabilitation', 'rehab']
+#keywords = ['opiate', 'opiates']
+keywords = ['opiate', 'opioid', 'addiction', 'addict', 'heroin', 'drugs', 'overdose',
+dependency', 'demon', 'recovery', 'rehabilitation', 'rehab']
 all_urls, labels = get_urls(keywords)
 df = convert_to_raw_df(all_urls, labels)
 df = drop_query_id(df)
