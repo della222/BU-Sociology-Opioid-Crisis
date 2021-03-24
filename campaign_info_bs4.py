@@ -1,15 +1,22 @@
 from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from os import getcwd
 from lxml import html
 import requests
 from requests.models import Response
 from datetime import datetime, timedelta
 
+
 def scrape_campaign(url):
+
     page = requests.get(url)
-    soup = BeautifulSoup(page.text, "html.parser")
+    soup = BeautifulSoup(page.text, "lxml")
 
     # list containing all the information (roughly matching Heather's format)
-    # [Name, Reason for Fund, Total Raised, Total Requested, Raised Ratio, Link, Date Created, Organizor, Beneficiary, Location]
+    # [Name, Reason for Fund, Total Raised, Total Requested, Raised Ratio, Link, Date Created, Organizor, Beneficiary, Location, donors, shares, followers]
     information_list = []
 
     '''
@@ -150,10 +157,37 @@ def scrape_campaign(url):
             #print("No location found")
             information_list.append(float('nan'))
 
+    '''
+    extracting dynamic parts of the page: donors, followers, shares
+    '''
+    driver = webdriver.Chrome(getcwd()+'/chromedriver')
+    driver.get(url)
+
+    html = driver.page_source
+    soup = BeautifulSoup(html, features="lxml")
+
+    try:
+        info = soup.find(class_='o-campaign-sidebar-wrapper')
+        info = info.text.split('goal')[1]
+        donors = int(info.split('donors')[0])
+        information_list.append(donors)
+
+        info = info.split('donors')[1]
+        shares = int(info.split('shares')[0])
+        information_list.append(shares)
+
+        info = info.split('shares')[1]
+        followers = int(info.split('followers')[0])
+        information_list.append(followers)
+
+    except:
+        for i in range(3):
+            information_list.append(float('nan'))
+
     return information_list
 
 
 # test run
-url = "https://www.gofundme.com/f/help-trex-pay-for-his-medical-bills?qid=8d6c6745c643e11f6137c4ec07719dc4"
+url = "https://www.gofundme.com/f/plrfzw"
 campaign_info = scrape_campaign(url)
 print(campaign_info)
