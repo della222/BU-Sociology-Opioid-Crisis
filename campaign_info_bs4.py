@@ -9,15 +9,32 @@ import requests
 from requests.models import Response
 from datetime import datetime, timedelta
 
+import pandas as pd
+import numpy as np
+from os import getcwd
 
-def scrape_campaign(url):
+URLPATH = getcwd() + '/data/urls.csv'
+cols = [
+    'URL',
+    'All_Keywords',
+    'Title',
+    'Reason_For_Fund',
+    'Total_Raised',
+    'Total_Goal',
+    'Percent_Reached',
+    'Campaign_Date',
+    'Organizer',
+    'Beneficiary',
+    'Location'
+]
 
-    page = requests.get(url)
+def scrape_campaign(url_row):
+    page = requests.get(url_row[0])
     soup = BeautifulSoup(page.text, "lxml")
 
     # list containing all the information (roughly matching Heather's format)
-    # [Name, Reason for Fund, Total Raised, Total Requested, Raised Ratio, Link, Date Created, Organizor, Beneficiary, Location, donors, shares, followers]
-    information_list = []
+    # [Name, Reason for Fund, Total Raised, Total Requested, Raised Ratio, Date Created, Organizer, Beneficiary, Location]
+    information_list = [url_row[0], reformat_keyword_list(url_row[1])]
 
     '''
     extract the title of the campaign.
@@ -57,7 +74,6 @@ def scrape_campaign(url):
     except:
         information_list.append(float('nan'))
 
-
     '''
     extracts the total goal of a campaign.
     then calculate how much of the goal was reached in terms of a percentage.
@@ -77,13 +93,6 @@ def scrape_campaign(url):
         #print("This campaign raised $" + str(amount_raised) + ". There was no total goal.")
         information_list.append(float('nan'))
         information_list.append(float('nan'))
-
-
-    '''
-    extract campaign link
-    '''
-    information_list.append(url)
-
 
     '''
     extract date that campaign was created
@@ -108,7 +117,7 @@ def scrape_campaign(url):
 
 
     '''
-    extract the organizor of the campaign.
+    extract the organizer of the campaign.
     '''
     try:
         info = soup.find(class_='m-campaign-members-main-organizer')
@@ -187,7 +196,47 @@ def scrape_campaign(url):
     return information_list
 
 
-# test run
-url = "https://www.gofundme.com/f/plrfzw"
-campaign_info = scrape_campaign(url)
-print(campaign_info)
+
+def reformat_keyword_list(keywords):
+    """
+    Converts string version of keywords list back to a python list
+
+    Args:
+        keywords (string): Keyword list as one string
+
+    Returns:
+        [list]: Python list of each keyword separated into strings
+    """    
+    kw = keywords.replace('[', '').replace(']', '').replace('\'', '').replace(' ', '')
+    kw = kw.split(",")
+    return list(set(kw))
+
+
+def generate_df(url_csv):
+    """
+    Calls scraper on each row of url dataframe and returns scraped data
+
+    Args:
+        url_csv ([DataFrame]): csv with all urls
+
+    Returns:
+        [DataFrame]: scraped data
+    """    
+    # test with number of urls
+    data = pd.DataFrame(url_csv.apply(scrape_campaign, axis=1).tolist(), columns=cols)
+    return data
+
+
+def main():
+    
+    # import csv with urls
+    url_csv = pd.read_csv(URLPATH)
+    print(np.shape(url_csv))
+    #url_csv = url_csv[url_csv['urls'] == "https://www.gofundme.com/f/jaynasdream"]
+    data = generate_df(url_csv.head(300))
+    data.to_csv(getcwd() + '/data/campaign_bs4_data.csv', index=False)
+
+
+if __name__ == '__main__':
+    main()
+

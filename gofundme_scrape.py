@@ -13,6 +13,13 @@ def get_urls(keywords_list):
     '''
     get_urls(): this function takes in a list of search terms, and scrapes all of the URLS for 
     GoFundMe campaigns associated with the search term and outputs it as a list
+    
+    Args:
+        keywords_list (list of strings): list of search terms
+
+    Returns:
+        urls (list of strings): list of GoFundMe urls 
+        labels (list of strings): search terms associated with GoFundMe urls
     '''
     urls = []
     labels = []
@@ -94,21 +101,20 @@ def merge_redundant_urls(df):
         # get all indices where url matches
         matches = np.where(df['urls'] == url)[0].tolist()
         for match in range(len(matches)):
-            if match == 0:  # change entry of first appearance to list and add  first keyword to it
+            if match == 0:  # change entry of first appearance to list and add first keyword to it
                 word = df.iloc[matches[match]]['keyword']
                 df.iloc[matches[match]]['keyword'] = []
                 df.iloc[matches[match]]['keyword'].append(word)
-            else:  # add keyword of redundant url to first appearance adn then drop the redundant row
+            else:  # add keyword of redundant url to first appearance
                 df.iloc[matches[0]]['keyword'].append(
                     df.iloc[matches[match]]['keyword'])
-                df = df.drop(df.index[matches[match]])
-
+    df = df.drop_duplicates(subset='urls', keep='first')  # drop all appearances but first
     return df
 
 
-keywords = ['opiate', 'opiates']
-# keywords = ['opiate', 'opioid', 'addiction', 'addict', 'heroin', 'drugs', 'overdose',
-# 'dependency', 'demon', 'recovery', 'rehabilitation', 'rehab']
+#keywords = ['opiate', 'opiates']
+keywords = ['opiate', 'opioid', 'addiction', 'addict', 'heroin', 'drugs', 'overdose',
+dependency', 'demon', 'recovery', 'rehabilitation', 'rehab']
 all_urls, labels = get_urls(keywords)
 df = convert_to_raw_df(all_urls, labels)
 df = drop_query_id(df)
