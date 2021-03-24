@@ -1,8 +1,14 @@
 from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from os import getcwd
 from lxml import html
 import requests
 from requests.models import Response
 from datetime import datetime, timedelta
+
 import pandas as pd
 import numpy as np
 from os import getcwd
@@ -160,7 +166,35 @@ def scrape_campaign(url_row):
             #print("No location found")
             information_list.append(float('nan'))
 
+    '''
+    extracting dynamic parts of the page: donors, followers, shares
+    '''
+    driver = webdriver.Chrome(getcwd()+'/chromedriver')
+    driver.get(url)
+
+    html = driver.page_source
+    soup = BeautifulSoup(html, features="lxml")
+
+    try:
+        info = soup.find(class_='o-campaign-sidebar-wrapper')
+        info = info.text.split('goal')[1]
+        donors = int(info.split('donors')[0])
+        information_list.append(donors)
+
+        info = info.split('donors')[1]
+        shares = int(info.split('shares')[0])
+        information_list.append(shares)
+
+        info = info.split('shares')[1]
+        followers = int(info.split('followers')[0])
+        information_list.append(followers)
+
+    except:
+        for i in range(3):
+            information_list.append(float('nan'))
+
     return information_list
+
 
 
 def reformat_keyword_list(keywords):
@@ -205,3 +239,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
