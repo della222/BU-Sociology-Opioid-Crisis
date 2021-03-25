@@ -10,7 +10,7 @@ from requests.models import Response
 from datetime import datetime, timedelta
 import json
 import re
-
+from time import time
 import pandas as pd
 import numpy as np
 from os import getcwd
@@ -27,7 +27,12 @@ cols = [
     'Campaign_Date',
     'Organizer',
     'Beneficiary',
-    'Location'
+    'Location',
+    'Donors',
+    'Shares',
+    'Followers',
+    "is_charity",
+     "charity", "currency_code", "donation_count", "comments_enable", "donations_enabled", "country", "is_business", "is_team"
 ]
 
 def scrape_campaign(url_row):
@@ -35,8 +40,7 @@ def scrape_campaign(url_row):
     soup = BeautifulSoup(page.text, "lxml")
 
     # list containing all the information (roughly matching Heather's format)
-    # [Name, Reason for Fund, Total Raised, Total Requested, Raised Ratio, Date Created, Organizer, Beneficiary, Location, Donors, Followers, Shares,
-    # is_charity, charity, currency_code, donation_count, comments_enable, donations_enabled, country, is_business, is_team]
+    # [Name, Reason for Fund, Total Raised, Total Requested, Raised Ratio, Date Created, Organizer, Beneficiary, Location]
     information_list = [url_row[0], reformat_keyword_list(url_row[1])]
 
     '''
@@ -173,7 +177,7 @@ def scrape_campaign(url_row):
     extracting dynamic parts of the page: donors, followers, shares
     '''
     driver = webdriver.Chrome(getcwd()+'/chromedriver')
-    driver.get(url_row)
+    driver.get(url_row[0])
 
     html = driver.page_source
     soup = BeautifulSoup(html, features="lxml")
@@ -196,10 +200,7 @@ def scrape_campaign(url_row):
         for i in range(3):
             information_list.append(float('nan'))
 
-    #return information_list
-
-
-
+    
 
     '''
     NIKITA'S EXTRA CAMPAIGN CODE
@@ -211,7 +212,6 @@ def scrape_campaign(url_row):
     
     Args:
         urls (list of strings): list of GoFundMe urls
-
     Returns:
         has_beneficiary (list of bools): T/F list where True if campaign has beneficiary, False if not
         is_charity (list of bools): T/F list where True if campaign is a charity, False if not
@@ -226,7 +226,7 @@ def scrape_campaign(url_row):
         is_team (list of bools): T/F list where True if campaign has team, False if not
     '''
     
-    html = requests.get(url_row).text 
+    html = requests.get(url_row[0]).text 
     data = json.loads(re.findall(r'window\.initialState = ({.*?});', html)[0]) #output "initialState" script that contains campaign info
 
 
@@ -283,9 +283,8 @@ def scrape_campaign(url_row):
     information_list.append(country_data)
     information_list.append(is_business_data)
     information_list.append(is_team_data)
-   
-    return information_list
 
+    return information_list
 
 
 
@@ -320,14 +319,18 @@ def generate_df(url_csv):
 
 
 def main():
-    
+    start = time()
+
     # import csv with urls
     url_csv = pd.read_csv(URLPATH)
     print(np.shape(url_csv))
-    #url_csv = url_csv[url_csv['urls'] == "https://www.gofundme.com/f/jaynasdream"]
-    data = generate_df(url_csv.head(300))
-    data.to_csv(getcwd() + '/data/campaign_bs4_data.csv', index=False)
 
+    #url_csv = url_csv[url_csv['urls'] == "https://www.gofundme.com/f/jaynasdream"]
+    data = generate_df(url_csv)
+    data.to_csv(getcwd() + '/data/campaign_bs4_data.csv', index=False)
+    end = time()
+    print(f'TIme to run: {(end - start) / 60} minutes')
 
 if __name__ == '__main__':
     main()
+
