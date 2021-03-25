@@ -8,6 +8,8 @@ from lxml import html
 import requests
 from requests.models import Response
 from datetime import datetime, timedelta
+import json
+import re
 
 import pandas as pd
 import numpy as np
@@ -33,7 +35,8 @@ def scrape_campaign(url_row):
     soup = BeautifulSoup(page.text, "lxml")
 
     # list containing all the information (roughly matching Heather's format)
-    # [Name, Reason for Fund, Total Raised, Total Requested, Raised Ratio, Date Created, Organizer, Beneficiary, Location]
+    # [Name, Reason for Fund, Total Raised, Total Requested, Raised Ratio, Date Created, Organizer, Beneficiary, Location, Donors, Followers, Shares,
+    # is_charity, charity, currency_code, donation_count, comments_enable, donations_enabled, country, is_business, is_team]
     information_list = [url_row[0], reformat_keyword_list(url_row[1])]
 
     '''
@@ -170,7 +173,7 @@ def scrape_campaign(url_row):
     extracting dynamic parts of the page: donors, followers, shares
     '''
     driver = webdriver.Chrome(getcwd()+'/chromedriver')
-    driver.get(url)
+    driver.get(url_row)
 
     html = driver.page_source
     soup = BeautifulSoup(html, features="lxml")
@@ -193,7 +196,96 @@ def scrape_campaign(url_row):
         for i in range(3):
             information_list.append(float('nan'))
 
+    #return information_list
+
+
+
+
+    '''
+    NIKITA'S EXTRA CAMPAIGN CODE
+    '''
+
+    '''
+    get_script_data(): this function takes a URL for a GoFundMe campaign and returns 
+    information stored in JSON format inside the page's window\.initialState script tag 
+    
+    Args:
+        urls (list of strings): list of GoFundMe urls
+
+    Returns:
+        has_beneficiary (list of bools): T/F list where True if campaign has beneficiary, False if not
+        is_charity (list of bools): T/F list where True if campaign is a charity, False if not
+        charity (list of strings): list of charity name if provided
+        currency_code (list of strings): list of campaign currency codes
+        donation_count (list of ints): list of # of campaign donations
+        comments_enabled (list of bools): T/F list where True if campaign has comments enabled, False if not
+        donations_enabled (list of bools): T/F list where True if campaign has donations enabled, False if not
+        has_donations (list of bools): T/F list where True if campaign has donations, False if not
+        country (list of strings): list of country codes
+        is_business (list of bools): T/F list where True if campaign is business, False if not
+        is_team (list of bools): T/F list where True if campaign has team, False if not
+    '''
+    
+    html = requests.get(url_row).text 
+    data = json.loads(re.findall(r'window\.initialState = ({.*?});', html)[0]) #output "initialState" script that contains campaign info
+
+
+    try:
+        is_charity_data = data['feed']['campaign']['is_charity']
+    except KeyError:
+        is_charity_data = ''
+
+    try: 
+        charity_data = data['feed']['campaign']['charity']
+    except KeyError:
+        charity_data = ''
+    
+    try:
+        currency_code_data = data['feed']['campaign']['currencycode']
+    except KeyError:
+        currency_code_data = ''
+
+    try:
+        donation_count_data = int(data['feed']['campaign']['donation_count'])
+    except KeyError:
+        donation_count_data = ''
+    try:
+        comments_enabled_data = data['feed']['campaign']['comments_enabled']
+    except KeyError:
+        comments_enabled_data = ''
+
+    try:
+        donations_enabled_data = data['feed']['campaign']['donations_enabled']
+    except KeyError:
+        donations_enabled_data = ''
+    
+    try:
+        country_data =  data['feed']['campaign']['location']['country']
+    except KeyError:
+        country_data = ''
+    
+    try:
+        is_business_data = data['feed']['campaign']['is_business']
+    except KeyError:
+        is_business_data = ''
+    
+    try:
+        is_team_data = data['feed']['campaign']['is_team']
+    except KeyError:
+        is_team_data = ''
+
+    information_list.append(is_charity_data)
+    information_list.append(charity_data) if charity_data == {} else information_list.append('')
+    information_list.append(currency_code_data)
+    information_list.append(donation_count_data)
+    information_list.append(comments_enabled_data)
+    information_list.append(donations_enabled_data)
+    information_list.append(country_data)
+    information_list.append(is_business_data)
+    information_list.append(is_team_data)
+   
     return information_list
+
 
 
 
@@ -239,4 +331,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
