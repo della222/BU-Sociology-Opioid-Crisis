@@ -75,10 +75,13 @@ def get_script_data(urls):
     country = []
     is_business = []
     is_team = []
+    photo_url = []
 
     for url in urls:
         html = requests.get(url).text 
         data = json.loads(re.findall(r'window\.initialState = ({.*?});', html)[0]) #output "initialState" script that contains campaign info
+
+        # print( json.dumps(data, indent=4))  #output JSON
 
         # print('Has_Beneficiary: ', data['feed']['campaign']['has_beneficiary'])
         # print('Is_Charity: ', data['feed']['campaign']['is_charity'])
@@ -91,6 +94,7 @@ def get_script_data(urls):
         # print('Country: ', data['feed']['campaign']['location']['country'])
         # print('Is_Business: ', data['feed']['campaign']['is_business'])
         # print('Is_Team: ', data['feed']['campaign']['is_team'])
+        # print('Photo_Url: ', data['feed']['campaign']['campaign_image_url'])
         
         try:    
             has_beneficiary_data = data['feed']['campaign']['has_beneficiary']
@@ -146,6 +150,11 @@ def get_script_data(urls):
         except KeyError:
             is_team_data = ''
 
+        try:
+            photo_url_data = data['feed']['campaign']['campaign_image_url']
+        except KeyError:
+            photo_url_data = ''
+
         has_beneficiary.append(has_beneficiary_data)
         is_charity.append(is_charity_data)
         charity.append(charity_data) if charity_data == {} else charity.append('')
@@ -156,7 +165,8 @@ def get_script_data(urls):
         country.append(country_data)
         is_business.append(is_business_data)
         is_team.append(is_team_data)
-    return has_beneficiary, is_charity, charity, currency_code, donation_count, comments_enabled, has_donations, country, is_business, is_team
+        photo_url.append(photo_url_data)
+    return has_beneficiary, is_charity, charity, currency_code, donation_count, comments_enabled, has_donations, country, is_business, is_team, photo_url
 
 urls = ["https://www.gofundme.com/f/whose-corner-is-it-anyway?qid=30352514c51c3880fb30bc9429c27736", "https://www.gofundme.com/f/1wlddigtio?qid=067af41e16867d4d13a291ad6df401d0", "https://www.gofundme.com/f/stop-kenney-from-shutting-down-ioat?qid=a64ddf83d13463c4b63db182661b2c1e", "https://www.gofundme.com/f/pups-need-veterinary-care-amp-family-help?qid=90c8529e6c4593f41a1916048b306c2c"]
 print(get_updatecomment_count(urls))

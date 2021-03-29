@@ -31,8 +31,8 @@ cols = [
     'Donors',
     'Shares',
     'Followers',
-    "is_charity",
-     "charity", "currency_code", "donation_count", "comments_enable", "donations_enabled", "country", "is_business", "is_team"
+    "Is_Charity",
+    "Charity", "Currency_Code", "Donation_Count", "Comments_Enabled", "Donations_Enabled", "Country", "Is_Business", "Is_Team", "Campaign_Photo_URL"
 ]
 
 def scrape_campaign(url_row):
@@ -200,89 +200,84 @@ def scrape_campaign(url_row):
         for i in range(3):
             information_list.append(float('nan'))
 
-    
+    '''
+    extract information stored in JSON format inside the page's window\.initialState script tag 
 
-    '''
-    NIKITA'S EXTRA CAMPAIGN CODE
-    '''
-
-    '''
-    get_script_data(): this function takes a URL for a GoFundMe campaign and returns 
-    information stored in JSON format inside the page's window\.initialState script tag 
-    
-    Args:
-        urls (list of strings): list of GoFundMe urls
-    Returns:
-        has_beneficiary (list of bools): T/F list where True if campaign has beneficiary, False if not
-        is_charity (list of bools): T/F list where True if campaign is a charity, False if not
-        charity (list of strings): list of charity name if provided
-        currency_code (list of strings): list of campaign currency codes
-        donation_count (list of ints): list of # of campaign donations
-        comments_enabled (list of bools): T/F list where True if campaign has comments enabled, False if not
-        donations_enabled (list of bools): T/F list where True if campaign has donations enabled, False if not
-        has_donations (list of bools): T/F list where True if campaign has donations, False if not
-        country (list of strings): list of country codes
-        is_business (list of bools): T/F list where True if campaign is business, False if not
-        is_team (list of bools): T/F list where True if campaign has team, False if not
+    is_charity_data (bool): where True if campaign is a charity, False if not
+    charity_data (string): charity name if provided
+    currency_code_data (string): campaign currency code
+    donation_count_data (int): amount of campaign donations
+    comments_enabled_data (bool): True if campaign has comments enabled, False if not
+    donations_enabled_data (bool): True if campaign has donations enabled, False if not
+    has_donations_data (bool): True if campaign has donations, False if not
+    country_data (string): country code
+    is_business_data (bool): True if campaign is business, False if not
+    is_team_data (bool): True if campaign has team, False if not
     '''
     
-    html = requests.get(url_row[0]).text 
+    html = page.text 
     data = json.loads(re.findall(r'window\.initialState = ({.*?});', html)[0]) #output "initialState" script that contains campaign info
 
 
     try:
         is_charity_data = data['feed']['campaign']['is_charity']
-    except KeyError:
-        is_charity_data = ''
+        information_list.append(is_charity_data)
+    except:
+        information_list.append(float('nan'))
 
     try: 
         charity_data = data['feed']['campaign']['charity']
-    except KeyError:
-        charity_data = ''
+        information_list.append(charity_data) if charity_data == {} else information_list.append(float('nan'))
+    except:
+        information_list.append(float('nan'))
     
     try:
         currency_code_data = data['feed']['campaign']['currencycode']
-    except KeyError:
-        currency_code_data = ''
+        information_list.append(currency_code_data)
+    except:
+        information_list.append(float('nan'))
 
     try:
         donation_count_data = int(data['feed']['campaign']['donation_count'])
-    except KeyError:
-        donation_count_data = ''
+        information_list.append(donation_count_data)
+    except:
+        information_list.append(float('nan'))
+
     try:
         comments_enabled_data = data['feed']['campaign']['comments_enabled']
-    except KeyError:
-        comments_enabled_data = ''
+        information_list.append(comments_enabled_data)
+    except:
+        information_list.append(float('nan'))
 
     try:
         donations_enabled_data = data['feed']['campaign']['donations_enabled']
-    except KeyError:
-        donations_enabled_data = ''
+        information_list.append(donations_enabled_data)
+    except:
+        information_list.append(float('nan'))
     
     try:
         country_data =  data['feed']['campaign']['location']['country']
-    except KeyError:
-        country_data = ''
+        information_list.append(country_data)
+    except:
+        information_list.append(float('nan'))
     
     try:
         is_business_data = data['feed']['campaign']['is_business']
-    except KeyError:
-        is_business_data = ''
+        information_list.append(is_business_data)
+    except:
+        information_list.append(float('nan'))
     
     try:
         is_team_data = data['feed']['campaign']['is_team']
-    except KeyError:
-        is_team_data = ''
-
-    information_list.append(is_charity_data)
-    information_list.append(charity_data) if charity_data == {} else information_list.append('')
-    information_list.append(currency_code_data)
-    information_list.append(donation_count_data)
-    information_list.append(comments_enabled_data)
-    information_list.append(donations_enabled_data)
-    information_list.append(country_data)
-    information_list.append(is_business_data)
-    information_list.append(is_team_data)
+        information_list.append(is_team_data)
+    except:
+        information_list.append(float('nan'))
+    
+    try:
+        campaign_photo_data = data['feed']['campaign']['campaign_image_url']
+        information_list.append(campaign_photo_data)
+    except:
+        information_list.append(float('nan'))
 
     return information_list
 
