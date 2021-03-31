@@ -3,6 +3,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 from os import getcwd
 from lxml import html
 import requests
@@ -10,9 +11,11 @@ from requests.models import Response
 from datetime import datetime, timedelta
 import json
 import re
-from time import time
+from time import time, sleep
 import pandas as pd
 import numpy as np
+import random
+from urllib.request import Request
 from os import getcwd
 
 URLPATH = getcwd() + '/data/urls.csv'
@@ -36,7 +39,10 @@ cols = [
 ]
 
 def scrape_campaign(url_row):
-    page = requests.get(url_row[0])
+
+    user_agent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.37"
+    page = requests.get(url_row[0], headers={'User-Agent': user_agent})
+    sleep(random.uniform(3,5))
     soup = BeautifulSoup(page.text, "lxml")
 
     # list containing all the information (roughly matching Heather's format)
@@ -168,37 +174,93 @@ def scrape_campaign(url_row):
         try:
             location = info.text.split("Organizer")[1]
             #print("This campaign is located at: " + location)
-            information_list.append(location)
+            information_list.append(location) if location != '' else information_list.append(float('nan'))
         except:
             #print("No location found")
             information_list.append(float('nan'))
 
     '''
     extracting dynamic parts of the page: donors, followers, shares
+    reference: https://stackoverflow.com/questions/35613024/convert-number-from-15-5k-and-1-20m-to-15-500-and-1-200-000-python
     '''
     driver = webdriver.Chrome(getcwd()+'/chromedriver')
     driver.get(url_row[0])
-
+    try: # wait for HTML list containing donors, shares, followers, info to load  
+        myElem = WebDriverWait(driver, 3).until(EC.presence_of_element_located((By.CLASS_NAME, 'list-unstyled m-meta-list m-meta-list--default')))
+        # print ("Loaded")
+    except TimeoutException:
+        # print ("Timeout")
+        pass 
+    
     html = driver.page_source
     soup = BeautifulSoup(html, features="lxml")
+    # info = soup.find(class_='o-campaign-sidebar-wrapper')
+
+    # info = info.text.split()
+    # print(info)
+    # donors = info[4].replace('goal', '')
+    # shares = info[5].replace('donors', '')
+    # followers = info[6].replace('shares', '')
+    # try:
+    #     shares = float(shares)  
+    # except ValueError:
+    #     unit = shares[-1]                 
+    #     shares = float(shares[:-1])        
+    #     shares = (shares * units[unit])
+
+    # print(donors, shares, followers)
 
     try:
+        units = {"K":1000,"M":1000000} # conversion shorthand number format (1K) to float representation (1000.0)
         info = soup.find(class_='o-campaign-sidebar-wrapper')
-        info = info.text.split('goal')[1]
-        donors = int(info.split('donors')[0])
-        information_list.append(donors)
-
-        info = info.split('donors')[1]
-        shares = int(info.split('shares')[0])
-        information_list.append(shares)
-
-        info = info.split('shares')[1]
-        followers = int(info.split('followers')[0])
-        information_list.append(followers)
-
+        info = info.text.split()
+        donors = info[4].replace('goal', '')
+        try: # does not contain K, M
+            donors = float(donors)
+            information_list.append(donors)  
+        except: # contains K, M
+            unit = donors[-1]                 
+            donors = float(donors[:-1])        
+            donors = (donors * units[unit]) # turn 1K into 1000
+            information_list.append(donors)
     except:
-        for i in range(3):
-            information_list.append(float('nan'))
+        information_list.append(float('nan'))
+
+    try:
+        units = {"K":1000,"M":1000000} 
+        info = soup.find(class_='o-campaign-sidebar-wrapper')
+        info = info.text.split()
+        shares = info[5].replace('donors', '')
+        try:
+            shares = float(shares) 
+            information_list.append(shares)
+        except ValueError:
+            unit = shares[-1]                 
+            shares = float(shares[:-1])        
+            shares = (shares * units[unit])
+            information_list.append(shares)
+    except:
+        information_list.append(float('nan'))
+
+    try:
+        units = {"K":1000,"M":1000000} 
+        info = soup.find(class_='o-campaign-sidebar-wrapper')
+        info = info.text.split()
+        followers = info[6].replace('shares', '')
+        try:
+            followers = float(followers) 
+            information_list.append(followers)
+        except ValueError:
+            unit = followers[-1]                 
+            followers = float(followers[:-1])        
+            followers = (followers * units[unit])
+            information_list.append(followers)
+    except:
+        information_list.append(float('nan'))
+
+    # except:
+    #     for i in range(3):
+    #         information_list.append(float('nan'))
 
     '''
     extract information stored in JSON format inside the page's window\.initialState script tag 
@@ -215,9 +277,11 @@ def scrape_campaign(url_row):
     is_team_data (bool): True if campaign has team, False if not
     '''
     
-    html = page.text 
-    data = json.loads(re.findall(r'window\.initialState = ({.*?});', html)[0]) #output "initialState" script that contains campaign info
-
+    html = page.text
+    try:
+        data = json.loads(re.findall(r'window\.initialState = ({.*?});', html)[0]) #output "initialState" script that contains campaign info
+    except:
+        pass
 
     try:
         is_charity_data = data['feed']['campaign']['is_charity']
@@ -227,7 +291,7 @@ def scrape_campaign(url_row):
 
     try: 
         charity_data = data['feed']['campaign']['charity']
-        information_list.append(charity_data) if charity_data == {} else information_list.append(float('nan'))
+        information_list.append(charity_data) if charity_data != {} else information_list.append(float('nan'))
     except:
         information_list.append(float('nan'))
     
@@ -279,6 +343,15 @@ def scrape_campaign(url_row):
     except:
         information_list.append(float('nan'))
 
+    # TESTING
+    if (len(information_list) == 24):
+        print(information_list)
+        print(len(information_list))
+
+    else:
+        print(information_list)
+        print(len(information_list), "BAD_LENGTH")
+
     return information_list
 
 
@@ -324,7 +397,7 @@ def main():
     data = generate_df(url_csv)
     data.to_csv(getcwd() + '/data/campaign_bs4_data.csv', index=False)
     end = time()
-    print(f'TIme to run: {(end - start) / 60} minutes')
+    print(f'Time to run: {(end - start) / 60} minutes')
 
 if __name__ == '__main__':
     main()
