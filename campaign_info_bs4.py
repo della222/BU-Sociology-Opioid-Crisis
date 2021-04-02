@@ -34,6 +34,8 @@ cols = [
     'Donors',
     'Shares',
     'Followers',
+    'Num_Updates',
+    'Num_Comments',
     "Is_Charity",
     "Charity", "Currency_Code", "Donation_Count", "Comments_Enabled", "Donations_Enabled", "Country", "Is_Business", "Is_Team", "Campaign_Photo_URL", "Description"
 ]
@@ -185,6 +187,8 @@ def scrape_campaign(url_row):
     '''
     driver = webdriver.Chrome(getcwd()+'/chromedriver')
     driver.get(url_row[0])
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);") # scroll to bottom of GoFundMe page
+    # sleep(3)
     try: # wait for HTML list containing donors, shares, followers, info to load  
         myElem = WebDriverWait(driver, 3).until(EC.presence_of_element_located((By.CLASS_NAME, 'list-unstyled m-meta-list m-meta-list--default')))
         # print ("Loaded")
@@ -257,6 +261,25 @@ def scrape_campaign(url_row):
             information_list.append(followers)
     except:
         information_list.append(float('nan'))
+    
+    '''
+    get # of campaign updates
+    '''
+    try:
+        info = soup.find('div', class_='p-campaign-updates')
+        information_list.append(0) if info.text == None else information_list.append(int(re.sub("[^0-9]", "", info.h2.text))) # regex remove text, keep only updates number
+    except:
+        information_list.append(float('nan'))
+
+    '''
+    get # of campaign comments
+    '''
+    try:
+        info = soup.find('div', class_='p-campaign-comments')
+        information_list.append(0) if info.text == None else information_list.append(int(re.sub("[^0-9]", "", info.h2.text))) # regex remove text, keep only updates number
+    except:
+        information_list.append(float('nan'))
+
 
     # except:
     #     for i in range(3):
@@ -356,7 +379,7 @@ def scrape_campaign(url_row):
         information_list.append(float('nan'))
 
     # TESTING
-    if (len(information_list) == 24):
+    if (len(information_list) == 27):
         print(information_list)
         print(len(information_list))
 
