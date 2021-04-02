@@ -3,6 +3,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 from os import getcwd
 from lxml import html
 import requests
@@ -10,9 +11,11 @@ from requests.models import Response
 from datetime import datetime, timedelta
 import json
 import re
-from time import time
+from time import time, sleep
 import pandas as pd
 import numpy as np
+import random
+from urllib.request import Request
 from os import getcwd
 
 URLPATH = getcwd() + '/data/urls.csv'
@@ -31,12 +34,17 @@ cols = [
     'Donors',
     'Shares',
     'Followers',
-    "is_charity",
-     "charity", "currency_code", "donation_count", "comments_enable", "donations_enabled", "country", "is_business", "is_team"
+    'Num_Updates',
+    'Num_Comments',
+    "Is_Charity",
+    "Charity", "Currency_Code", "Donation_Count", "Comments_Enabled", "Donations_Enabled", "Country", "Is_Business", "Is_Team", "Campaign_Photo_URL", "Description"
 ]
 
 def scrape_campaign(url_row):
-    page = requests.get(url_row[0])
+
+    user_agent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.37"
+    page = requests.get(url_row[0], headers={'User-Agent': user_agent})
+    sleep(random.uniform(3,5))
     soup = BeautifulSoup(page.text, "lxml")
 
     # list containing all the information (roughly matching Heather's format)
@@ -168,121 +176,216 @@ def scrape_campaign(url_row):
         try:
             location = info.text.split("Organizer")[1]
             #print("This campaign is located at: " + location)
-            information_list.append(location)
+            information_list.append(location) if location != '' else information_list.append(float('nan'))
         except:
             #print("No location found")
             information_list.append(float('nan'))
 
     '''
     extracting dynamic parts of the page: donors, followers, shares
+    reference: https://stackoverflow.com/questions/35613024/convert-number-from-15-5k-and-1-20m-to-15-500-and-1-200-000-python
     '''
     driver = webdriver.Chrome(getcwd()+'/chromedriver')
     driver.get(url_row[0])
-
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);") # scroll to bottom of GoFundMe page
+    # sleep(3)
+    try: # wait for HTML list containing donors, shares, followers, info to load  
+        myElem = WebDriverWait(driver, 3).until(EC.presence_of_element_located((By.CLASS_NAME, 'list-unstyled m-meta-list m-meta-list--default')))
+        # print ("Loaded")
+    except TimeoutException:
+        # print ("Timeout")
+        pass 
+    
     html = driver.page_source
     soup = BeautifulSoup(html, features="lxml")
+    # info = soup.find(class_='o-campaign-sidebar-wrapper')
+
+    # info = info.text.split()
+    # print(info)
+    # donors = info[4].replace('goal', '')
+    # shares = info[5].replace('donors', '')
+    # followers = info[6].replace('shares', '')
+    # try:
+    #     shares = float(shares)  
+    # except ValueError:
+    #     unit = shares[-1]                 
+    #     shares = float(shares[:-1])        
+    #     shares = (shares * units[unit])
+
+    # print(donors, shares, followers)
 
     try:
+        units = {"K":1000,"M":1000000} # conversion shorthand number format (1K) to float representation (1000.0)
         info = soup.find(class_='o-campaign-sidebar-wrapper')
-        info = info.text.split('goal')[1]
-        donors = int(info.split('donors')[0])
-        information_list.append(donors)
-
-        info = info.split('donors')[1]
-        shares = int(info.split('shares')[0])
-        information_list.append(shares)
-
-        info = info.split('shares')[1]
-        followers = int(info.split('followers')[0])
-        information_list.append(followers)
-
+        info = info.text.split()
+        donors = info[4].replace('goal', '')
+        try: # does not contain K, M
+            donors = float(donors)
+            information_list.append(donors)  
+        except: # contains K, M
+            unit = donors[-1]                 
+            donors = float(donors[:-1])        
+            donors = (donors * units[unit]) # turn 1K into 1000
+            information_list.append(donors)
     except:
-        for i in range(3):
-            information_list.append(float('nan'))
+        information_list.append(float('nan'))
 
+    try:
+        units = {"K":1000,"M":1000000} 
+        info = soup.find(class_='o-campaign-sidebar-wrapper')
+        info = info.text.split()
+        shares = info[5].replace('donors', '')
+        try:
+            shares = float(shares) 
+            information_list.append(shares)
+        except ValueError:
+            unit = shares[-1]                 
+            shares = float(shares[:-1])        
+            shares = (shares * units[unit])
+            information_list.append(shares)
+    except:
+        information_list.append(float('nan'))
+
+    try:
+        units = {"K":1000,"M":1000000} 
+        info = soup.find(class_='o-campaign-sidebar-wrapper')
+        info = info.text.split()
+        followers = info[6].replace('shares', '')
+        try:
+            followers = float(followers) 
+            information_list.append(followers)
+        except ValueError:
+            unit = followers[-1]                 
+            followers = float(followers[:-1])        
+            followers = (followers * units[unit])
+            information_list.append(followers)
+    except:
+        information_list.append(float('nan'))
     
+    '''
+    get # of campaign updates
+    '''
+    try:
+        info = soup.find('div', class_='p-campaign-updates')
+        information_list.append(0) if info.text == None else information_list.append(int(re.sub("[^0-9]", "", info.h2.text))) # regex remove text, keep only updates number
+    except:
+        information_list.append(float('nan'))
 
     '''
-    NIKITA'S EXTRA CAMPAIGN CODE
+    get # of campaign comments
     '''
+    try:
+        info = soup.find('div', class_='p-campaign-comments')
+        information_list.append(0) if info.text == None else information_list.append(int(re.sub("[^0-9]", "", info.h2.text))) # regex remove text, keep only updates number
+    except:
+        information_list.append(float('nan'))
+
+
+    # except:
+    #     for i in range(3):
+    #         information_list.append(float('nan'))
 
     '''
-    get_script_data(): this function takes a URL for a GoFundMe campaign and returns 
-    information stored in JSON format inside the page's window\.initialState script tag 
+    extract information stored in JSON format inside the page's window\.initialState script tag 
+
+    is_charity_data (bool): where True if campaign is a charity, False if not
+    charity_data (string): charity name if provided
+    currency_code_data (string): campaign currency code
+    donation_count_data (int): amount of campaign donations
+    comments_enabled_data (bool): True if campaign has comments enabled, False if not
+    donations_enabled_data (bool): True if campaign has donations enabled, False if not
+    has_donations_data (bool): True if campaign has donations, False if not
+    country_data (string): country code
+    is_business_data (bool): True if campaign is business, False if not
+    is_team_data (bool): True if campaign has team, False if not
+    '''
     
-    Args:
-        urls (list of strings): list of GoFundMe urls
-    Returns:
-        has_beneficiary (list of bools): T/F list where True if campaign has beneficiary, False if not
-        is_charity (list of bools): T/F list where True if campaign is a charity, False if not
-        charity (list of strings): list of charity name if provided
-        currency_code (list of strings): list of campaign currency codes
-        donation_count (list of ints): list of # of campaign donations
-        comments_enabled (list of bools): T/F list where True if campaign has comments enabled, False if not
-        donations_enabled (list of bools): T/F list where True if campaign has donations enabled, False if not
-        has_donations (list of bools): T/F list where True if campaign has donations, False if not
-        country (list of strings): list of country codes
-        is_business (list of bools): T/F list where True if campaign is business, False if not
-        is_team (list of bools): T/F list where True if campaign has team, False if not
-    '''
-    
-    html = requests.get(url_row[0]).text 
-    data = json.loads(re.findall(r'window\.initialState = ({.*?});', html)[0]) #output "initialState" script that contains campaign info
-
+    html = page.text
+    try:
+        data = json.loads(re.findall(r'window\.initialState = ({.*?});', html)[0]) #output "initialState" script that contains campaign info
+    except:
+        pass
 
     try:
         is_charity_data = data['feed']['campaign']['is_charity']
-    except KeyError:
-        is_charity_data = ''
+        information_list.append(is_charity_data)
+    except:
+        information_list.append(float('nan'))
 
     try: 
         charity_data = data['feed']['campaign']['charity']
-    except KeyError:
-        charity_data = ''
+        information_list.append(charity_data) if charity_data != {} else information_list.append(float('nan'))
+    except:
+        information_list.append(float('nan'))
     
     try:
         currency_code_data = data['feed']['campaign']['currencycode']
-    except KeyError:
-        currency_code_data = ''
+        information_list.append(currency_code_data)
+    except:
+        information_list.append(float('nan'))
 
     try:
         donation_count_data = int(data['feed']['campaign']['donation_count'])
-    except KeyError:
-        donation_count_data = ''
+        information_list.append(donation_count_data)
+    except:
+        information_list.append(float('nan'))
+
     try:
         comments_enabled_data = data['feed']['campaign']['comments_enabled']
-    except KeyError:
-        comments_enabled_data = ''
+        information_list.append(comments_enabled_data)
+    except:
+        information_list.append(float('nan'))
 
     try:
         donations_enabled_data = data['feed']['campaign']['donations_enabled']
-    except KeyError:
-        donations_enabled_data = ''
+        information_list.append(donations_enabled_data)
+    except:
+        information_list.append(float('nan'))
     
     try:
         country_data =  data['feed']['campaign']['location']['country']
-    except KeyError:
-        country_data = ''
+        information_list.append(country_data)
+    except:
+        information_list.append(float('nan'))
     
     try:
         is_business_data = data['feed']['campaign']['is_business']
-    except KeyError:
-        is_business_data = ''
+        information_list.append(is_business_data)
+    except:
+        information_list.append(float('nan'))
     
     try:
         is_team_data = data['feed']['campaign']['is_team']
-    except KeyError:
-        is_team_data = ''
+        information_list.append(is_team_data)
+    except:
+        information_list.append(float('nan'))
+    
+    try:
+        campaign_photo_data = data['feed']['campaign']['campaign_image_url']
+        information_list.append(campaign_photo_data)
+    except:
+        information_list.append(float('nan'))
 
-    information_list.append(is_charity_data)
-    information_list.append(charity_data) if charity_data == {} else information_list.append('')
-    information_list.append(currency_code_data)
-    information_list.append(donation_count_data)
-    information_list.append(comments_enabled_data)
-    information_list.append(donations_enabled_data)
-    information_list.append(country_data)
-    information_list.append(is_business_data)
-    information_list.append(is_team_data)
+
+    '''
+    get campaign description
+    '''
+    try:
+        info = soup.find(class_='o-campaign-description')
+        description = info.text
+        description = description.replace(u'\xa0', u'')
+        information_list.append(description)
+    except:
+        information_list.append(float('nan'))
+
+    # TESTING
+    if (len(information_list) == 27):
+        print(information_list)
+        print(len(information_list))
+
+    else:
+        print(information_list)
+        print(len(information_list), "BAD_LENGTH")
 
     return information_list
 
@@ -325,11 +428,11 @@ def main():
     url_csv = pd.read_csv(URLPATH)
     print(np.shape(url_csv))
 
-    #url_csv = url_csv[url_csv['urls'] == "https://www.gofundme.com/f/jaynasdream"]
+    #url_csv = url_csv[url_csv['urls'] == "https://www.gofundme.com/f/whose-corner-is-it-anyway"]
     data = generate_df(url_csv)
     data.to_csv(getcwd() + '/data/campaign_bs4_data.csv', index=False)
     end = time()
-    print(f'TIme to run: {(end - start) / 60} minutes')
+    print(f'Time to run: {(end - start) / 60} minutes')
 
 if __name__ == '__main__':
     main()
