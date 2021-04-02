@@ -35,7 +35,7 @@ cols = [
     'Shares',
     'Followers',
     "Is_Charity",
-    "Charity", "Currency_Code", "Donation_Count", "Comments_Enabled", "Donations_Enabled", "Country", "Is_Business", "Is_Team", "Campaign_Photo_URL"
+    "Charity", "Currency_Code", "Donation_Count", "Comments_Enabled", "Donations_Enabled", "Country", "Is_Business", "Is_Team", "Campaign_Photo_URL", "Description"
 ]
 
 def scrape_campaign(url_row):
@@ -343,6 +343,18 @@ def scrape_campaign(url_row):
     except:
         information_list.append(float('nan'))
 
+
+    '''
+    get campaign description
+    '''
+    try:
+        info = soup.find(class_='o-campaign-description')
+        description = info.text
+        description = description.replace(u'\xa0', u'')
+        information_list.append(description)
+    except:
+        information_list.append(float('nan'))
+
     # TESTING
     if (len(information_list) == 24):
         print(information_list)
@@ -393,7 +405,7 @@ def main():
     url_csv = pd.read_csv(URLPATH)
     print(np.shape(url_csv))
 
-    #url_csv = url_csv[url_csv['urls'] == "https://www.gofundme.com/f/jaynasdream"]
+    #url_csv = url_csv[url_csv['urls'] == "https://www.gofundme.com/f/whose-corner-is-it-anyway"]
     data = generate_df(url_csv)
     data.to_csv(getcwd() + '/data/campaign_bs4_data.csv', index=False)
     end = time()
