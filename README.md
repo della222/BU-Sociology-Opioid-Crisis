@@ -8,6 +8,7 @@ We created a scraper to extract the following basic info from a particular campa
 - beneficiary
 - date created
 - location
+- description
 - campaign tags
 - number of followers
 - number of donors
