@@ -25,7 +25,7 @@ def main():
 
     # group by keyword and save campaigns in separate Excel sheets by keyword, then save a sheet with all campaigns
     keyword_groups = joined_data.groupby('Keyword')
-    writer = pd.ExcelWriter("/Users/jaydenfont/Desktop/School/Classes/CS506/BU-Sociology-Opioid-Crisis/data/GFM_Data_Final.xlsx", engine='xlsxwriter')
+    writer = pd.ExcelWriter("/Users/jaydenfont/Desktop/School/Classes/CS506/BU-Sociology-Opioid-Crisis/data/GFM_Data_Final.xlsx", engine='xlsxwriter', options={'strings_to_urls': False})
     for keyword, group in keyword_groups:
         group.to_excel(writer, sheet_name=keyword)
     raw_data.to_excel(writer, sheet_name="all_campaigns")
