@@ -544,7 +544,7 @@ def main():
     start = time()
 
     # import csv with urls
-    url_csv = pd.read_csv(URLPATH)
+    url_csv = pd.read_csv(URLPATH).iloc[8000:8500]
     print(np.shape(url_csv))
 
     #url_csv = url_csv[url_csv['urls'] == "https://www.gofundme.com/f/whose-corner-is-it-anyway"]
