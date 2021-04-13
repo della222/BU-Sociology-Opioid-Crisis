@@ -20,3 +20,9 @@ We created a scraper to extract the following basic info from a particular campa
 - script tag information: beneficiary is charity (T/F), comments enabled (T/F), donations enabled (T/F), campaign is team (T/F), campaign is business (T/F)
 
 ChromeDriver is included, so the user does not have to change to their local path.
+
+-- Additional Attributes Generated for Data Analysis--
+
+Sentiment Analysis Performed using VADER
+- attribute1
+- etc.
