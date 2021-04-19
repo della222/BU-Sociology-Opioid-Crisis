@@ -7,6 +7,7 @@ from os import getcwd
 from bs4 import BeautifulSoup
 import requests
 import json
+import os
 
 def get_updatecomment_count(urls):
     cwd = getcwd()
