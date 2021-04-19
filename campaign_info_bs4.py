@@ -18,6 +18,8 @@ import random
 from urllib.request import Request
 from os import getcwd
 
+cwd = getcwd()
+os.chdir("..")
 URLPATH = getcwd() + '/data/urls.csv'
 cols = [
     'URL',
