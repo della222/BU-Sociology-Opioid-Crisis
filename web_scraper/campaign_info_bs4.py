@@ -16,7 +16,7 @@ import pandas as pd
 import numpy as np
 import random
 from urllib.request import Request
-from os import getcwd
+import os
 
 cwd = getcwd()
 os.chdir("..")

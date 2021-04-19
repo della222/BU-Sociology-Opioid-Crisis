@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from os import getcwd
+import os
 from campaign_info_bs4 import reformat_keyword_list
 
 
