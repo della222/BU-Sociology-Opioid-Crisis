@@ -5,7 +5,12 @@ from campaign_info_bs4 import reformat_keyword_list
 
 
 def main():
-    raw_data = pd.read_csv("/Users/jaydenfont/Desktop/School/Classes/CS506/BU-Sociology-Opioid-Crisis/data/updated_csv_filtered_FINAL.csv")  # change this when we finish Selenium scraper
+    
+     # set cwd to main folder
+    p=Path(os.getcwd())
+    os.chdir(p.parent)
+
+    raw_data = pd.read_csv(getcwd() + '/data/campaign_bs4_data.csv')
     raw_data.All_Keywords = raw_data.All_Keywords.apply(reformat_keyword_list)
 
     # separate out each keyword in the 'All_Keywords' lists
