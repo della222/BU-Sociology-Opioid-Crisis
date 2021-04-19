@@ -111,8 +111,8 @@ def main():
     
     '''
 
-    # -Navigate from /processing folder into into /data folder
-    cwd = getcwd()
+    # -Navigate from /preprocessing folder into into /data folder
+    cwd = os.getcwd()
     os.chdir("..")
     os.chdir(cwd+'/data')
 
@@ -125,9 +125,7 @@ def main():
     updated_csv = filter_empty_rows('campaign_bs4_data_FINAL.csv') #filter out empty rows
     updated_csv = filter_country(updated_csv) #filter out international campaigns
     
-    
     #updated_csv.to_csv('updated_csv_countries.csv',index=False)
-
     #dataframe = pd.read_csv('updated_csv_countries.csv')
 
     # -Convert campaign dates to datetime objects, so we can perform computations and visualize data over time
