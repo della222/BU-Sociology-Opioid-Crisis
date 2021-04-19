@@ -52,7 +52,7 @@ First, collect the appropriate urls that contain any of the specified keywords i
 
 Next, collect the list of attributes for each campaign by running campaign_info_bs4.py. This file is also in the web_scraper folder. You can also specify which sections of urls you would like to scrape by specifying the urls indices on line 547. After running the scraper, you should find the list of attributes in /data/campaign_bs4_data.csv. (This is unprocessed data, so we did not upload it to GitHub)
 
-If you run campaign_info_bs4.py on different sections of urls, you can merge the results by running merge_filter_csvs.py. This file is in the data folder. Start by creating a folder containing all of the unmerged data. (The rest of the directions are commented in the file itself)
+If you run campaign_info_bs4.py on different sections of urls, you can merge the results by running merge_filter_csvs.py. This file is in the preprocessing folder. Start by creating a folder containing all of the unmerged data. (The rest of the directions are commented in the file itself)
 
 Finally, reformat the data in campaign_bs4_data by running data_formatting.py. This file is in the preprocessing folder. After running the script, you should see an Excel file titled GFM_Data_Final.xlsx, which contains subsheets of campaign data for each keyword and a subsheet of campaign data for all keywords.
 
