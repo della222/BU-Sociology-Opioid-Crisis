@@ -5,7 +5,12 @@ from campaign_info_bs4 import reformat_keyword_list
 
 
 def main():
-    raw_data = pd.read_csv("/Users/jaydenfont/Desktop/School/Classes/CS506/BU-Sociology-Opioid-Crisis/data/updated_csv_filtered_FINAL.csv")  # change this when we finish Selenium scraper
+    
+    # set cwd to main folder
+    cwd = getcwd()
+    os.chdir("..")
+
+    raw_data = pd.read_csv(getcwd() + '/data/updated_csv_filtered_FINAL.csv')
     raw_data.All_Keywords = raw_data.All_Keywords.apply(reformat_keyword_list)
 
     # separate out each keyword in the 'All_Keywords' lists
@@ -25,7 +30,7 @@ def main():
 
     # group by keyword and save campaigns in separate Excel sheets by keyword, then save a sheet with all campaigns
     keyword_groups = joined_data.groupby('Keyword')
-    writer = pd.ExcelWriter("/Users/jaydenfont/Desktop/School/Classes/CS506/BU-Sociology-Opioid-Crisis/data/GFM_Data_Final.xlsx", engine='xlsxwriter', options={'strings_to_urls': False})
+    writer = pd.ExcelWriter(getcwd() + "/data/GFM_Data_Final.xlsx", engine='xlsxwriter', options={'strings_to_urls': False})
     for keyword, group in keyword_groups:
         group.to_excel(writer, sheet_name=keyword)
     raw_data.to_excel(writer, sheet_name="all_campaigns")
