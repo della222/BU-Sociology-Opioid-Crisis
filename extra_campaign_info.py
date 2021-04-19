@@ -9,6 +9,8 @@ import requests
 import json
 
 def get_updatecomment_count(urls):
+    cwd = getcwd()
+    os.chdir("..")
     PATH = getcwd() + '/chromedriver'
     driver = webdriver.Chrome(PATH)
 
