@@ -38,11 +38,13 @@ VADER (Valence Aware Dictionary for Sentiment Reasoning) is a sentiment analysis
 
 # Data Collection Workflow
 
-Files used to scrape data
+Files used to scrape data<br />
 gofundme_scrape.py:
-- Used to scrape campaigns associated with a key search term from the list of terms provided by our client. These URLs are added to .
+- Used to scrape campaigns associated with a key search term from the list of terms provided by our client.<br />
+
 campaign_info_bs4.py:
-- Used to scrape specific information for each campaign in urls.csv using both Selenium and BeautifulSoup
+- Used to scrape specific information for each campaign in urls.csv using both Selenium and BeautifulSoup<br />
+
 data_formatting.py:
 - Used to organize our final list of campaigns into the format specified by our client (an Excel file with multiple sheets corresponding to campaigns associated with each keyword and a master Excel sheet with a list of all campaigns)
 
