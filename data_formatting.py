@@ -6,9 +6,9 @@ from campaign_info_bs4 import reformat_keyword_list
 
 def main():
     
-     # set cwd to main folder
-    p=Path(os.getcwd())
-    os.chdir(p.parent)
+    # set cwd to main folder
+    cwd = os.getcwd()
+    os.chdir("..")
 
     raw_data = pd.read_csv(getcwd() + '/data/campaign_bs4_data.csv')
     raw_data.All_Keywords = raw_data.All_Keywords.apply(reformat_keyword_list)
